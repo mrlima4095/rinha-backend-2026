@@ -1,0 +1,7 @@
+{
+    "participants": ["Luiz Fernando Joaquim da Silva", "Felipe Souza Pereira de Lima"],
+    "social": ["https://www.github.com/robogg133", "https://www.github.com/mrlima4095"],
+    "source-code-repo": "https://github.com/robogg133/rinha2026",
+    "stack": ["go", "mongodb", "nginx", "redis"],
+    "open_to_work": true
+}
