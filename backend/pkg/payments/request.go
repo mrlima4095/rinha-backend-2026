@@ -1,4 +1,4 @@
-package request
+package payments
 
 import (
 	"slices"
@@ -30,7 +30,7 @@ type Payment struct {
 
 	Merchant *struct {
 		ID        string  `json:"id"`
-		MCC       uint16  `json:"mcc"`
+		MCC       string  `json:"mcc"`
 		AVGAmount float32 `json:"avg_amount"`
 	} `json:"merchant"`
 
@@ -46,13 +46,11 @@ func (p *Payment) ToVector() *vector.Vector {
 	v := new(vector.Vector)
 
 	v.SetAmount(p.Transaction.Amount / vector.MaxAmount)                                      // 0
-	v.SetInstallments(float32(p.Transaction.Installments / vector.MaxInstallments))           // 1
+	v.SetInstallments(float32(p.Transaction.Installments) / float32(vector.MaxInstallments))  // 1
 	v.SetAmountVsAVG((p.Transaction.Amount / p.Customer.AvgAmount) / vector.AmountVsAVGRatio) // 2
 
-	utcTimestamp := p.Transaction.RequestedAt.UTC().Unix()
-
-	v.SetHourOfDay(float32(utcTimestamp / 23)) // 3
-	v.SetDayOfWeek(float32(utcTimestamp / 6))  // 4
+	v.SetHourOfDay(float32(p.Transaction.RequestedAt.Hour()) / 23)        // 3
+	v.SetDayOfWeek(weekdayToNum[p.Transaction.RequestedAt.Weekday()] / 6) // 4
 
 	p.applyLastTransaction(v) // 5 and 6
 
@@ -73,7 +71,7 @@ func (p *Payment) ToVector() *vector.Vector {
 
 	v.SetMerchantAVGAmount(p.Merchant.AVGAmount / vector.MaxMerchantAVGAmount) // 13
 
-	return nil
+	return v
 }
 
 func boolToFloat(b bool) float32 {
@@ -90,10 +88,21 @@ func (p *Payment) applyLastTransaction(v *vector.Vector) {
 	if p.LastTransaction == nil {
 		v.SetMinutesSinceLastTx(-1)
 		v.SetKmFromLastTx(-1)
+		return
 	}
 
 	minutes := p.Transaction.RequestedAt.Sub(p.LastTransaction.Timestamp).Minutes()
 	v.SetMinutesSinceLastTx(float32(minutes / vector.MaxMinutes))
 
 	v.SetKmFromLastTx(p.LastTransaction.KmFromCurrent / vector.MaxKm)
+}
+
+var weekdayToNum [7]float32 = [7]float32{
+	6,
+	0,
+	1,
+	2,
+	3,
+	4,
+	5,
 }

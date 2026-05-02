@@ -1,0 +1,8 @@
+
+text=auto
+
+references.go binary
+
+*.gz binary
+
+.gitattributes export-ignore
