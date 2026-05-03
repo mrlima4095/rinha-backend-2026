@@ -9,7 +9,6 @@ COPY tools ./tools
 COPY internal/references internal/references
 COPY pkg/vector pkg/vector
 
-RUN mkdir -p internal/references
 RUN go generate ./...
 
 FROM golang:1.26.2-alpine AS build
@@ -29,7 +28,7 @@ FROM scratch AS runner
 WORKDIR /srv
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY --from=autogen /app/references_database .
+COPY --from=autogen /app/references_database ./references_database
 
 COPY --from=build /app/app . 
 
