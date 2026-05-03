@@ -1,0 +1,1 @@
+# por favor, quando for compilar não compila no terminal do seu editor de código, pq ele vai tentar rodar o gopls nos arquivos gerados pelo go generate e eles são abssurdamente grandes

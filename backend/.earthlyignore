@@ -1,5 +1,0 @@
-*.exe
-Earthfile
-Dockerfile
-.earthlyignore
-.dockerignore
