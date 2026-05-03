@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/robogg133/rinha-backend-2026/pkg/vector"
 )
 
-// estrutura temporária apenas para decodificar o JSON
 type rawEntry struct {
 	Vector []float32 `json:"vector"`
 	Label  string    `json:"label"`
@@ -45,27 +45,32 @@ func main() {
 	reader.Close()
 	f.Close()
 
-	db.Update(func(txn *badger.Txn) error {
-		for _, e := range raw {
-			var a byte
-			switch e.Label {
-			case "fraud":
-				a = 1
-			}
-
-			vec := vector.Vector(e.Vector)
-
-			var buffer bytes.Buffer
-
-			if err := vec.WriteBinary(&buffer); err != nil {
-				return err
-			}
-
-			if err := txn.Set(buffer.Bytes(), []byte{a}); err != nil {
-				return err
-			}
+	wb := db.NewWriteBatch()
+	defer wb.Cancel()
+	for i, e := range raw {
+		var a byte
+		switch e.Label {
+		case "fraud":
+			a = 1
 		}
-		return nil
-	})
+
+		vec := vector.Vector(e.Vector)
+
+		var buffer bytes.Buffer
+
+		if err := vec.WriteBinary(&buffer); err != nil {
+			panic(err)
+		}
+
+		if err := wb.Set(buffer.Bytes(), []byte{a}); err != nil {
+			panic(err)
+		}
+		fmt.Println("INSERT:", i)
+	}
+	if err := wb.Flush(); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("SUCESS! DATABASE FLUSHED!!")
 
 }
