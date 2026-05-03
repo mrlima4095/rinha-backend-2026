@@ -13,7 +13,7 @@ func FindFraudScore(query vector.Vector) float32 {
 	var top5 [5]Match
 	db := references.Database()
 
-	db.View(func(txn *badger.Txn) error {
+	if err := db.View(func(txn *badger.Txn) error {
 
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
@@ -27,15 +27,15 @@ func FindFraudScore(query vector.Vector) float32 {
 
 			isFraud := false
 
-			it.Item().Value(func(val []byte) error {
-
+			if err := it.Item().Value(func(val []byte) error {
 				switch val[0] {
 				case 1:
 					isFraud = true
 				}
-
 				return nil
-			})
+			}); err != nil {
+				return err
+			}
 
 			dist := compareVector(query, vec)
 			fmt.Printf("==%.4f==\n", dist)
@@ -49,7 +49,9 @@ func FindFraudScore(query vector.Vector) float32 {
 		}
 
 		return nil
-	})
+	}); err != nil {
+		panic(err)
+	}
 
 	frauds := 0
 	for i, m := range top5 {
